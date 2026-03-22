@@ -3,6 +3,19 @@ import tempfile
 import torch
 import numpy as np
 import cv2
+import os
+import urllib.request
+
+def download_model(url, filename):
+    if not os.path.exists(filename):
+        print(f"Downloading {filename}...")
+        urllib.request.urlretrieve(url, filename)
+# 🔽 DOWNLOAD MODELS (IMPORTANT)
+
+# 🔽 DOWNLOAD MODELS (IMPORTANT)
+download_model("https://drive.google.com/uc?id=1SMZL7V-nnaOItT-CvI2rm_Oyeg5zkS1i", "video_model.pth")
+download_model("https://drive.google.com/uc?id=18grYKARGAt0qRz1qNui3tnWyzGCYdiu_", "audio_model.pth")
+download_model("https://drive.google.com/uc?id=1RSPfbQToHUzRDOrlQse7kNXQ5TAGucAm", "fusion_model.pth")
 
 from utils.video_utils import get_frames
 from utils.audio_utils import extract_audio, extract_audio_features
@@ -31,9 +44,9 @@ if video:
         audio_model = AudioEncoder()
         fusion_model = CrossAttentionModel()
 
-        video_model.load_state_dict(torch.load("video_model.pth"))
-        audio_model.load_state_dict(torch.load("audio_model.pth"))
-        fusion_model.load_state_dict(torch.load("fusion_model.pth"))
+        video_model.load_state_dict(torch.load("video_model.pth", map_location="cpu"))
+        audio_model.load_state_dict(torch.load("audio_model.pth", map_location="cpu"))
+        fusion_model.load_state_dict(torch.load("fusion_model.pth", map_location="cpu"))
 
         video_model.eval()
         audio_model.eval()
