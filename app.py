@@ -14,19 +14,30 @@ from models.audio_model import AudioEncoder
 from models.fusion_model import CrossAttentionModel
 
 # -------------------------------
-# 🔽 DOWNLOAD MODELS (ONLY ONCE)
+# ⚙️ PAGE CONFIG
 # -------------------------------
-def download_model(url, filename):
-    if not os.path.exists(filename):
-        st.write(f"Downloading {filename}...")
-        urllib.request.urlretrieve(url, filename)
+st.set_page_config(page_title="Emotion Recognition", layout="centered")
 
-download_model("https://drive.google.com/uc?id=1SMZL7V-nnaOItT-CvI2rm_Oyeg5zkS1i", "video_model.pth")
-download_model("https://drive.google.com/uc?id=18grYKARGAt0qRz1qNui3tnWyzGCYdiu_", "audio_model.pth")
-download_model("https://drive.google.com/uc?id=1RSPfbQToHUzRDOrlQse7kNXQ5TAGucAm", "fusion_model.pth")
+st.title("🎭 Multimodal Emotion Recognition")
+st.write("Upload a video to detect emotion using Audio + Video")
 
 # -------------------------------
-# ⚡ CACHE MODELS (VERY IMPORTANT)
+# 🔽 DOWNLOAD MODELS (RUN ONCE)
+# -------------------------------
+@st.cache_resource
+def download_models():
+    def download(url, filename):
+        if not os.path.exists(filename):
+            urllib.request.urlretrieve(url, filename)
+
+    download("https://drive.google.com/uc?id=1SMZL7V-nnaOItT-CvI2rm_Oyeg5zkS1i", "video_model.pth")
+    download("https://drive.google.com/uc?id=18grYKARGAt0qRz1qNui3tnWyzGCYdiu_", "audio_model.pth")
+    download("https://drive.google.com/uc?id=1RSPfbQToHUzRDOrlQse7kNXQ5TAGucAm", "fusion_model.pth")
+
+download_models()
+
+# -------------------------------
+# ⚡ LOAD MODELS (CACHED)
 # -------------------------------
 @st.cache_resource
 def load_models():
@@ -47,14 +58,11 @@ def load_models():
 
 video_model, audio_model, fusion_model = load_models()
 
-# -------------------------------
-# 🎨 UI
-# -------------------------------
-st.set_page_config(page_title="Emotion Recognition", layout="centered")
+st.success("⚡ Models loaded. Ready for prediction!")
 
-st.title("🎭 Multimodal Emotion Recognition")
-st.write("Upload a video to detect emotion using Audio + Video")
-
+# -------------------------------
+# 🎥 FILE UPLOAD
+# -------------------------------
 video = st.file_uploader("Upload Video", type=["mp4", "mov"])
 
 # -------------------------------
@@ -68,8 +76,8 @@ if video:
 
     with st.spinner("🔍 Analyzing emotion..."):
 
-        # 🎥 VIDEO PROCESSING
-        frames = get_frames(tfile.name)
+        # 🎥 VIDEO PROCESSING (LIMIT FRAMES FOR SPEED)
+        frames = get_frames(tfile.name, max_frames=5)
         video_features = []
 
         for frame in frames:
@@ -98,6 +106,7 @@ if video:
         with torch.no_grad():
             output = fusion_model(video_feat, audio_feat)
 
+        # ✅ STABLE PREDICTION
         probs = torch.softmax(output, dim=1).numpy()[0]
         pred = int(np.argmax(probs))
 
