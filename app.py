@@ -98,7 +98,8 @@ if video:
         with torch.no_grad():
             output = fusion_model(video_feat, audio_feat)
 
-        pred = torch.argmax(output).item()
+        probs = torch.softmax(output, dim=1).numpy()[0]
+        pred = int(np.argmax(probs))
 
     # -------------------------------
     # 🎯 OUTPUT
